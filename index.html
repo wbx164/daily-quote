@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日金句</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        #quote-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            min-height: 60px;
+        }
+        #quote-source {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1558b0;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <p id="quote-text">点击下方按钮获取金句</p>
+    <p id="quote-source">—— 未知</p>
+    <button id="refresh-btn" onclick="getNewQuote()">换一句</button>
+</div>
+
+<script>
+    const quoteEl = document.getElementById('quote-text');
+    const sourceEl = document.getElementById('quote-source');
+    const btnEl = document.getElementById('refresh-btn');
+
+    // 页面加载时：先看 localStorage 里有没有，有就直接显示
+    window.onload = function() {
+        const savedQuote = localStorage.getItem('daily_quote');
+        const savedSource = localStorage.getItem('daily_source');
+        
+        if (savedQuote) {
+            quoteEl.textContent = savedQuote;
+            sourceEl.textContent = savedSource ? `—— ${savedSource}` : '—— 未知';
+        } else {
+            getNewQuote(); // 没有才去调 API
+        }
+    };
+
+    // 获取新金句
+    async function getNewQuote() {
+        quoteEl.textContent = '加载中...';
+        sourceEl.textContent = '';
+        btnEl.disabled = true;
+
+        try {
+            // 调用“一言”免费API（无需注册，无跨域问题）
+            const response = await fetch('https://v1.hitokoto.cn/');
+            const data = await response.json();
+            
+            const quote = data.hitokoto;
+            const source = data.from || data.from_who || '未知';
+
+            quoteEl.textContent = quote;
+            sourceEl.textContent = `—— ${source}`;
+
+            // 存入 localStorage，刷新不丢
+            localStorage.setItem('daily_quote', quote);
+            localStorage.setItem('daily_source', source);
+
+        } catch (error) {
+            quoteEl.textContent = '获取失败，请检查网络后重试。';
+            console.error('API请求失败:', error);
+        } finally {
+            btnEl.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
